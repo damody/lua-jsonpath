@@ -432,7 +432,7 @@ function match_path(ast, path, parent, obj)
     local ast_iter = ipairs(ast)
     local ast_key, ast_spec = ast_iter(ast, 0)
     local match = MATCH_PARTIAL
-
+    
     for _,component in ipairs(path) do
         local match_component = true
         if type(ast_spec) ~= 'table' and ast_spec == '..' then
@@ -500,9 +500,10 @@ function match_path(ast, path, parent, obj)
 end
 
 
-local function match_tree(nodes, ast, path, parent, obj, count)
+local function match_tree(nodes, ast, path, parent, obj, count, newvalue)
     -- Try to match every node against AST
     local match = match_path(ast, path, parent, obj)
+    
     if match == MATCH_ONE or match == MATCH_DESCENDANTS then
         -- This node matches. Add path and value to result
         -- (if max result count not yet reached)
@@ -515,6 +516,10 @@ local function match_tree(nodes, ast, path, parent, obj, count)
                 end
             end
         end
+        if newvalue ~= nil then
+            parent[path[#path]] = newvalue
+            obj = newvalue
+        end
         nodes[path] = obj
     end
     -- Recursively traverse children, if any
@@ -525,7 +530,7 @@ local function match_tree(nodes, ast, path, parent, obj, count)
                 table.insert(path1, p)
             end
             table.insert(path1, type(key) == 'string' and key or (key - 1))
-            match_tree(nodes, ast, path1, obj, child, count)
+            match_tree(nodes, ast, path1, obj, child, count, newvalue)
         end
     end
 end
@@ -581,7 +586,7 @@ end
 --      --   { path: {'$', 'store', 'book', 3, 'author'}, value: 'J. R. R. Tolkien' }
 --      -- }
 --
-function M.nodes(obj, expr, count)
+function M.nodes(obj, expr, count, newvalue)
     if obj == nil or type(obj) ~= 'table' then
         return nil, "missing or invalid 'obj' argument"
     end
@@ -618,7 +623,7 @@ function M.nodes(obj, expr, count)
     end
 
     local matches = {}
-    match_tree(matches, ast, { '$' }, {}, obj, count)
+    match_tree(matches, ast, { '$' }, {}, obj, count, newvalue)
 
     -- Sort results by path
     local sorted = {}
@@ -663,8 +668,8 @@ end
 --      local author = jp.value(data, '$..author')
 --      -- 'Nigel Rees'
 --
-function M.value(obj, expr)
-    local nodes, err = M.nodes(obj, expr, count)
+function M.value(obj, expr, newvalue)
+    local nodes, err = M.nodes(obj, expr, count, newvalue)
     if nodes == nil then
         return nil, err
     end
