@@ -1,8 +1,8 @@
 package = 'jsonpath'
 version = '1.0-1'
 source = {
-    url = 'git://github.com/mrpace2/lua-jsonpath',
-    tag = '1.0'
+    url = 'git://github.com/damody/lua-jsonpath',
+    tag = 'master'
 }
 description = {
     summary = 'Query Lua data structures with JsonPath expressions. Robust and safe JsonPath engine for Lua.',
